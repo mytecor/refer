@@ -292,6 +292,24 @@ func RemoveDocument(db *sql.DB, id int) error {
 	return nil
 }
 
+func RemoveDocumentByPath(db *sql.DB, path string) error {
+	_, err := db.Exec("DELETE FROM documents WHERE filepath = ?", path)
+	if err != nil {
+		return fmt.Errorf("failed to remove document by path: %v", err)
+	}
+
+	return nil
+}
+
+func RemoveDocumentsByPrefix(db *sql.DB, prefix string) error {
+	_, err := db.Exec("DELETE FROM documents WHERE filepath = ? OR filepath LIKE ?", prefix, prefix+string(os.PathSeparator)+"%")
+	if err != nil {
+		return fmt.Errorf("failed to remove documents by prefix: %v", err)
+	}
+
+	return nil
+}
+
 func GetDatabaseStats(db *sql.DB) (map[string]int, error) {
 	stats := make(map[string]int)
 

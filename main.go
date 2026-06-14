@@ -4,15 +4,12 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/fs"
 	"log"
 	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 
 	"github.com/alecthomas/kong"
-	"github.com/go-git/go-git/v5/plumbing/format/gitignore"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/meain/refer/internal"
 )
@@ -25,6 +22,7 @@ type CLI struct {
 	Stats    StatsCmd `cmd:"" help:"Show database statistics"`
 	Reindex  Reindex  `cmd:"" help:"Reindex all documents"`
 	Remove   Remove   `cmd:"" help:"Remove a document from the database"`
+	Watch    Watch    `cmd:"" help:"Watch a directory and index files automatically"`
 }
 
 type Add struct {
@@ -41,6 +39,10 @@ type Search struct {
 }
 
 type Reindex struct{}
+
+type Watch struct {
+	Path string `arg:"" optional:"" default:"." help:"Directory to watch"`
+}
 
 type Show struct {
 	ID *int `arg:"" optional:"" help:"Optional document ID to show details for a specific document"`
@@ -97,7 +99,7 @@ func main() {
 	}
 
 	if !new {
-		if kctx.Command() == "add <file-path>" || kctx.Command() == "search" {
+		if strings.HasPrefix(kctx.Command(), "add ") || strings.HasPrefix(kctx.Command(), "search") || strings.HasPrefix(kctx.Command(), "watch") {
 			// Check that the embedding model in the database matches the
 			// one in the config only if the command is add or
 			// search. This is necessary as the models must match for the
@@ -128,48 +130,19 @@ func main() {
 			if internal.IsRemoteURL(f) {
 				allPaths = append(allPaths, f)
 			} else {
-				var matcher gitignore.Matcher
-				if !cli.Add.NoIgnore {
-					gitDir, err := internal.FindGitDir(f)
-					if err == nil {
-						patterns, err := internal.LoadGitignorePatterns(gitDir)
-						if err != nil {
-							log.Printf("Warning: could not load gitignore patterns: %v", err)
-						} else {
-							matcher = gitignore.NewMatcher(patterns)
-						}
-					}
-				}
-
-				err = filepath.WalkDir(f, func(path string, dirEntry fs.DirEntry, err error) error {
-					if err != nil {
-						log.Printf("Failed to walk directory %q: %v", f, err)
-						return err
-					}
-
-					// Skip if ignored by git
-					if matcher != nil {
-						relPath, err := filepath.Rel(f, path)
-						if err != nil {
-							return err
-						}
-
-						if matcher.Match(strings.Split(relPath, string(filepath.Separator)), dirEntry.IsDir()) {
-							if dirEntry.IsDir() {
-								return filepath.SkipDir
-							}
-							return nil
-						}
-					}
-
-					if !dirEntry.IsDir() {
-						allPaths = append(allPaths, path)
-					}
-					return nil
-				})
+				filter, err := internal.NewPathFilter(f, cfg, !cli.Add.NoIgnore)
 				if err != nil {
-					log.Printf("Failed to walk directory %q: %v", f, err)
+					log.Printf("Warning: could not build path filter for %q: %v", f, err)
+					filter, _ = internal.NewPathFilter(f, cfg, false)
 				}
+
+				paths, err := internal.CollectFiles(f, filter)
+				if err != nil {
+					log.Printf("Failed to collect files for %q: %v", f, err)
+					continue
+				}
+
+				allPaths = append(allPaths, paths...)
 			}
 		}
 
@@ -392,6 +365,10 @@ func main() {
 			log.Fatalf("Failed to remove document: %v", err)
 		}
 		fmt.Printf("Document %d removed successfully\n", cli.Remove.ID)
+	case "watch", "watch <path>":
+		if err := internal.WatchAndIndex(ctx, database, cli.Watch.Path, cfg); err != nil {
+			log.Fatalf("Watch failed: %v", err)
+		}
 	default:
 		panic("Unexpected command: " + kctx.Command())
 	}

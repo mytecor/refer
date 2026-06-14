@@ -17,15 +17,17 @@ var (
 )
 
 type EmbeddingRequest struct {
-	Model string `json:"model"`
-	Input string `json:"prompt"`
+	Model  string `json:"model"`
+	Input  string `json:"input,omitempty"`
+	Prompt string `json:"prompt,omitempty"`
 }
 
 func CreateEmbedding(ctx context.Context, text string) ([]float32, error) {
 	// Create a new HTTP request
 	data := EmbeddingRequest{
-		Model: Model,
-		Input: text,
+		Model:  Model,
+		Input:  text,
+		Prompt: text,
 	}
 
 	// Marshal the data to JSON
@@ -64,10 +66,21 @@ func CreateEmbedding(ctx context.Context, text string) ([]float32, error) {
 	// Decode the response
 	var embeddingResp struct {
 		Embedding []float64 `json:"embedding"`
+		Data      []struct {
+			Embedding []float64 `json:"embedding"`
+		} `json:"data"`
 	}
 	err = json.NewDecoder(resp.Body).Decode(&embeddingResp)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode response: %v", err)
+	}
+
+	if len(embeddingResp.Embedding) == 0 && len(embeddingResp.Data) > 0 {
+		embeddingResp.Embedding = embeddingResp.Data[0].Embedding
+	}
+
+	if len(embeddingResp.Embedding) == 0 {
+		return nil, fmt.Errorf("embedding response did not contain an embedding")
 	}
 
 	// Convert the embedding to float32

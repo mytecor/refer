@@ -7,10 +7,12 @@ import (
 )
 
 type Config struct {
-	EmbeddingBaseURL string `json:"embedding_base_url"`
-	EmbeddingModel   string `json:"embedding_model"`
-	APIKey           string `json:"api_key,omitempty"`
-	RerankerURL      string `json:"reranker_url,omitempty"`
+	EmbeddingBaseURL string   `json:"embedding_base_url"`
+	EmbeddingModel   string   `json:"embedding_model"`
+	APIKey           string   `json:"api_key,omitempty"`
+	RerankerURL      string   `json:"reranker_url,omitempty"`
+	Include          []string `json:"include,omitempty"`
+	Ignore           []string `json:"ignore,omitempty"`
 }
 
 func LoadConfig() (*Config, error) {
