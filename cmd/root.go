@@ -311,7 +311,7 @@ func parseCLI(args []string) (string, string, runner, error) {
 	root := flag.NewFlagSet("refer", flag.ContinueOnError)
 	root.SetOutput(io.Discard)
 
-	database := root.String("database", ".referdb", "Database file path")
+	database := root.String("database", ".refer/refer.db", "Database file path")
 	root.Usage = func() {
 		printRootUsage()
 	}

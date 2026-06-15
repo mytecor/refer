@@ -23,19 +23,27 @@ func LoadConfig() (*Config, error) {
 		RerankerURL:      "http://localhost:11435/v1/rerank",
 	}
 
-	// Get config file path
+	// Get global config file paths
 	configDir, err := os.UserConfigDir()
-	if err != nil {
-		return cfg, nil // Return defaults if can't get config dir
+	configPaths := []string{}
+	if err == nil {
+		configPaths = append(configPaths, filepath.Join(configDir, "refer", "config.json"))
 	}
-
-	// Define possible config paths
-	configPaths := []string{
-		filepath.Join(configDir, "refer", "config.json"),
+	configPaths = append(configPaths,
 		filepath.Join(os.Getenv("HOME"), ".config", "refer", "config.json"), // Additional path for macOS
-	}
+	)
+
+	// Merge local config from current directory over global config.
+	configPaths = append(configPaths, filepath.Join(".refer", "config.json"))
+
+	loadedPaths := map[string]bool{}
 
 	for _, configPath := range configPaths {
+		if loadedPaths[configPath] {
+			continue
+		}
+		loadedPaths[configPath] = true
+
 		// Check if config file exists
 		if _, err := os.Stat(configPath); os.IsNotExist(err) {
 			continue // Try next path if this file doesn't exist
@@ -51,8 +59,6 @@ func LoadConfig() (*Config, error) {
 		if err := json.Unmarshal(data, cfg); err != nil {
 			return cfg, nil // Return defaults if can't parse
 		}
-
-		break // Configuration loaded successfully
 	}
 
 	// Update global variables

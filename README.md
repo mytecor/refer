@@ -19,7 +19,13 @@ _View the video on [Youtube](https://youtu.be/K5LfqEMUwL0) if you are having tro
 
 ## Configuration
 
-`refer` can be configured via a JSON file located at `~/.config/refer/config.json`.
+`refer` can be configured via JSON files loaded in this order:
+
+- `~/.config/refer/config.json`
+- `./.refer/config.json`
+
+If both files are present, `./.refer/config.json` is merged over the global config.
+By default, the local database is also stored in `./.refer/refer.db`.
 The following settings are available:
 
 ```json
@@ -143,7 +149,7 @@ echo "output from other command" | refer search
 
 Use a different database file:
 ```bash
-refer --database=/path/to/referdb search "query"
+refer --database=/path/to/refer.db search "query"
 ```
 
 Get full content matches:

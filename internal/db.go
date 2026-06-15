@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	sqlite_vec "github.com/asg017/sqlite-vec-go-bindings/cgo"
 )
@@ -80,6 +81,12 @@ func GetDocumentEmbedding(db *sql.DB, id int64) ([]byte, error) {
 // and any error that occurred.
 func CreateDB(dbPath string) (*sql.DB, bool, error) {
 	sqlite_vec.Auto() // Ensure sqlite-vec is loaded
+
+	if dir := filepath.Dir(dbPath); dir != "." {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return nil, false, fmt.Errorf("create database directory %s: %w", dir, err)
+		}
+	}
 
 	isNew := !fileExists(dbPath)
 	db, err := sql.Open("sqlite3", dbPath)
