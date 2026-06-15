@@ -34,7 +34,7 @@ The following settings are available:
     "embedding_model": "nomic-embed-text",
     "api_key": "", // Optional API key
     "include": [],
-    "ignore": []
+    "exclude": []
 }
 ```
 
@@ -42,7 +42,7 @@ The following settings are available:
 - `embedding_model`: The embedding model to use
 - `api_key`: Optional API key for authorization. **It is recommended to pass this via the `REFER_API_KEY` environment variable for better security.**
 - `include`: Optional gitignore-style patterns for files to index
-- `ignore`: Optional gitignore-style patterns for files or directories to skip
+- `exclude`: Optional gitignore-style patterns for files or directories to skip
 
 If no config file is present, these default values will be used.
 You can also use any provider that supports the OpenAI format for embedding API.
@@ -99,7 +99,7 @@ refer watch path/to/directory
 
 Add files while respecting gitignore patterns:
 ```bash
-refer add path/to/directory --ignore
+refer add path/to/directory
 ```
 
 Add a web page:
@@ -178,7 +178,7 @@ refer search "your search query" --threshold=20
 2. When watching a directory, `refer`:
    - Indexes all matching files on startup
    - Watches for file creates, writes, renames, and removals
-   - Applies optional `include` and `ignore` config patterns to control what is indexed
+    - Applies optional `include` and `exclude` config patterns to control what is indexed
 
 3. When searching:
    - Generates an embedding for your search query

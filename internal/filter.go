@@ -24,8 +24,8 @@ func NewPathFilter(root string, cfg *Config, useGitIgnore bool) (*PathFilter, er
 		if len(cfg.Include) > 0 {
 			filter.includeMatcher = gitignore.NewMatcher(parsePatterns(cfg.Include))
 		}
-		if len(cfg.Ignore) > 0 {
-			filter.ignoreMatcher = gitignore.NewMatcher(parsePatterns(cfg.Ignore))
+		if len(cfg.Exclude) > 0 {
+			filter.ignoreMatcher = gitignore.NewMatcher(parsePatterns(cfg.Exclude))
 		}
 	}
 

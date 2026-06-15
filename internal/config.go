@@ -12,7 +12,7 @@ type Config struct {
 	APIKey           string   `json:"api_key,omitempty"`
 	RerankerURL      string   `json:"reranker_url,omitempty"`
 	Include          []string `json:"include,omitempty"`
-	Ignore           []string `json:"ignore,omitempty"`
+	Exclude          []string `json:"exclude,omitempty"`
 }
 
 func LoadConfig() (*Config, error) {
